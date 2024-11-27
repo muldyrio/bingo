@@ -1,3 +1,5 @@
-test.pdf
-.cache
+*.pdf
+*.cache
 *.csv
+*.pyc
+reformat.py
