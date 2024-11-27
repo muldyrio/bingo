@@ -20,11 +20,13 @@ class Generator(customtkinter.CTk):
 	
 		# Create display frame
 		self.display_frame = customtkinter.CTkFrame(self, width=500)
-		self.display_frame.grid(row=0, column=0, sticky='nw', padx=(5, 5))
+		self.display_frame.grid(row=0, column=0, sticky='nw', padx=(10, 10), pady=(10, 10))
 		
 		# Create display frame elements
 		self.display_title = customtkinter.CTkLabel(self.display_frame, text='Card Preview', font=customtkinter.CTkFont(size=20, weight="bold"))
 		self.display_title.pack()
+		self.display_image = customtkinter.CTkLabel(self.display_frame, text='')
+		self.display_image.pack()
 
 		# Create config frame
 		self.config_frame = customtkinter.CTkFrame(self, width=420)
@@ -64,10 +66,15 @@ class Generator(customtkinter.CTk):
 		pdf = generate_card(info, **options)
 		pdf.output('temp.pdf', 'F')
 		pdf_image = convert_from_path('temp.pdf')[0]
-		#os.remove('temp.pdf')
-		image = customtkinter.CTkImage(pdf_image)
-		image_frame = customtkinter.CTkLabel(self.display_frame, image=image, height=200, width=200, text='')
-		image_frame.pack()
+		#pdf_image.save('test.png')
+		os.remove('temp.pdf')
+		width, height = pdf_image.size
+		scale_factor = min(500/width, 800/height)
+		size = (scale_factor * width, scale_factor * height)
+
+		image = customtkinter.CTkImage(pdf_image, size=size)
+		self.display_image.configure(image=image)
+		self.display_image.image=image
 
 def main():
 	app = Generator('test', '1200x800')
