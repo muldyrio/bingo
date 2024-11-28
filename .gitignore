@@ -2,4 +2,7 @@
 *.cache
 *.csv
 *.pyc
+*.ttf
+*.pkl
+*.png
 reformat.py

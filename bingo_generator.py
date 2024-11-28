@@ -41,28 +41,72 @@ def get_num_of_lines_in_multicell(pdf, message: str, CELL_WIDTH: float) -> int:
             line = word + " "
     return n
 
-def generate_card(card_info: list, font_path: str, font_size: float, cell_w: float, cell_h: float) -> None:
-	n_rows = len(card_info)
-	n_cols = len(card_info[0])
-	pdf = FPDF(orientation = 'L', format = (n_rows * cell_h, n_cols * cell_w))
-	pdf.add_font('bingo_font', '', font_path, uni=True)
-	pdf.set_auto_page_break(False)
-	pdf.add_page()
-	pdf.set_xy(0, 0)
-	pdf.set_font('bingo_font', '', font_size)
-	pdf.set_margins(0, 0, 0)
+def generate_card(card_info: list, pdf_object, font_size, ncol: int, nrow: int, template_path: str='template.png', page_y_offset: float=0) :
+	try:
+		pdf_object.image(template_path, x=0, y=page_y_offset, w=210, h=99, type='png')
+	except FileNotFoundError:
+		pass		
+	
+	# Bingo area is a 90x120mm box with top-left corner at (4.5mm, 85.5mm)
+	offset_x, offset_y = 85.5, 4.5 + page_y_offset
+	pdf_object.set_xy(offset_x, offset_y)
+	cell_h = 90.0 / nrow
+	cell_w = 120.0 / ncol
+
+	# Print bingo words
 	for i, row_info in enumerate(card_info):
 		for j, cell_info in enumerate(row_info):
-			if cell_info is None:
-				cell_info = ''
-			
-			text_height = get_num_of_lines_in_multicell(pdf, cell_info, cell_w) * (25.4 * font_size / 72 + 1)
-			x, y = j * cell_w, i * cell_h + (cell_h-text_height) / 2
-			pdf.set_xy(x, y)
-			pdf.multi_cell(txt=cell_info, border=0, align='C', w=cell_w, h=25.4 * font_size / 72 + 1)
-			pdf.rect(j * cell_w, i * cell_h, cell_w, cell_h)
-		pdf.ln()
-	return pdf
+			text_height = get_num_of_lines_in_multicell(pdf_object, cell_info, cell_w) * (25.4 * font_size / 72 + 1)
+			x, y = j * cell_w + offset_x, i * cell_h + (cell_h-text_height) / 2 + offset_y
+			pdf_object.set_xy(x, y)
+			pdf_object.multi_cell(txt=cell_info, border=0, align='C', w=cell_w, h=25.4 * font_size / 72 + 1)
+	
+	# Print bingo grid
+	for i in range(1, nrow):
+		pdf_object.line(offset_x, i * cell_h + offset_y, offset_x + 120, i * cell_h + offset_y)
+	
+	for j in range(1, ncol):
+		pdf_object.line(j * cell_w + offset_x, offset_y, j * cell_w + offset_x, offset_y + 90)
+
+	return pdf_object
+
+def generate_card_preview(card_info: list, font_path: str, font_size: float, font_color: tuple, ncol: int, nrow: int, template_path='template.png') :
+	# Setup PDF file
+	pdf = FPDF(orientation = 'L', format = (99, 210))
+	pdf.add_font('bingo_font', '', font_path, uni=True)
+	pdf.set_font('bingo_font', '', font_size)
+	pdf.set_text_color(*font_color)
+	pdf.set_draw_color(*font_color)
+	pdf.set_auto_page_break(False)
+	pdf.set_margins(0, 0, 0)
+	pdf.add_page()
+
+	return generate_card(card_info, pdf, font_size, ncol, nrow)
+
+def generate_sheet(card_info: list, pdf_object, font_size, ncol: int, nrow: int, template_path: str='template.png') :
+	pdf_object.add_page()
+
+	for i, card in enumerate(card_info):
+		pdf_object = generate_card(card, pdf_object, font_size, ncol, nrow, template_path, page_y_offset=i*99)
+	
+	return pdf_object
+
+def generate_multi_sheets(n_pages: int, card_info: list, font_path: str, font_size: float, font_color: tuple, ncol: int, nrow: int, template_path: str='template.png') -> None:
+	# Setup PDF file
+	pdf = FPDF(orientation = 'L', format = (297, 210))
+	pdf.add_font('bingo_font', '', font_path, uni=True)
+	pdf.set_font('bingo_font', '', font_size)
+	pdf.set_text_color(*font_color)
+	pdf.set_draw_color(*font_color)
+	pdf.set_auto_page_break(False)
+	pdf.set_margins(0, 0, 0)
+
+	for i in range(n_pages):
+		page_info = card_info[3*i:3*(i+1)]
+		pdf = generate_sheet(page_info, pdf, font_size, ncol, nrow, template_path)
+	
+	pdf.output('generated_sheet.pdf', 'F')
+
 
 # def main():
 # 	spotify_uri = sys.argv[1]
