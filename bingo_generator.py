@@ -41,26 +41,26 @@ def get_num_of_lines_in_multicell(pdf, message: str, CELL_WIDTH: float) -> int:
             line = word + " "
     return n
 
-def generate_card(card_info: list, **kwargs) -> None:
+def generate_card(card_info: list, font_path: str, font_size: float, cell_w: float, cell_h: float) -> None:
 	n_rows = len(card_info)
 	n_cols = len(card_info[0])
-	pdf = FPDF(orientation = 'L', format = (n_rows * kwargs['cell_h'], n_cols * kwargs['cell_w']))
-	pdf.add_font('comic_sans', '', r'/home/hest/Downloads/Comic Sans MS.ttf', uni=True)
+	pdf = FPDF(orientation = 'L', format = (n_rows * cell_h, n_cols * cell_w))
+	pdf.add_font('bingo_font', '', font_path, uni=True)
 	pdf.set_auto_page_break(False)
 	pdf.add_page()
 	pdf.set_xy(0, 0)
-	pdf.set_font(kwargs['font'], '', kwargs['font_size'])
+	pdf.set_font('bingo_font', '', font_size)
 	pdf.set_margins(0, 0, 0)
 	for i, row_info in enumerate(card_info):
 		for j, cell_info in enumerate(row_info):
 			if cell_info is None:
 				cell_info = ''
 			
-			text_height = get_num_of_lines_in_multicell(pdf, cell_info, kwargs['cell_w']) * (25.4 * kwargs['font_size'] / 72 + 1)
-			x, y = j * kwargs['cell_w'], i * kwargs['cell_h'] + (kwargs['cell_h']-text_height) / 2
+			text_height = get_num_of_lines_in_multicell(pdf, cell_info, cell_w) * (25.4 * font_size / 72 + 1)
+			x, y = j * cell_w, i * cell_h + (cell_h-text_height) / 2
 			pdf.set_xy(x, y)
-			pdf.multi_cell(txt=cell_info, border=0, align='C', w=kwargs['cell_w'], h=25.4 * kwargs['font_size'] / 72 + 1)
-			pdf.rect(j * kwargs['cell_w'], i * kwargs['cell_h'], kwargs['cell_w'], kwargs['cell_h'])
+			pdf.multi_cell(txt=cell_info, border=0, align='C', w=cell_w, h=25.4 * font_size / 72 + 1)
+			pdf.rect(j * cell_w, i * cell_h, cell_w, cell_h)
 		pdf.ln()
 	return pdf
 

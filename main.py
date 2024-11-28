@@ -33,7 +33,7 @@ class Generator(customtkinter.CTk):
 		self.config_frame.grid(column=1, row=0, sticky='ne', padx=(10, 10), pady=(10, 10))
 		self.config_frame.grid_columnconfigure(2)
 
-		# Create display frame elements
+		# Create config frame elements
 		self.spotify_link = customtkinter.CTkEntry(self.config_frame, width=400, placeholder_text='Link to Spotify playlist...')
 		self.spotify_link.grid(row=0, column=0, columnspan=2, padx=(10, 10), pady=(10, 10))
 		self.spotify_button = customtkinter.CTkButton(self.config_frame, text='Generate' ,command=self.generate_list_spotify)
@@ -44,6 +44,14 @@ class Generator(customtkinter.CTk):
 		self.card_items.grid(row=2, column=0, columnspan=2, pady=(10, 10))
 		self.generate_button = customtkinter.CTkButton(self.config_frame, text='Generate card' ,command=self.generate_bingo_card)
 		self.generate_button.grid(row=3, column=0, columnspan=2, pady=(10, 10))
+		self.font_select_field = customtkinter.CTkEntry(self.config_frame, width=300, placeholder_text='Path to font...')
+		self.font_select_field.grid(row=4, column=0, columnspan=1, pady=(10, 10), padx=(10, 10))
+		self.font_select_button = customtkinter.CTkButton(self.config_frame, text='Select font', command=self.select_font)
+		self.font_select_button.grid(row=4, column=1, columnspan=1, padx=(10, 10))
+		self.font_size_slider = customtkinter.CTkSlider(self.config_frame, from_=5, to=72, number_of_steps=67, command=self.set_font_size)
+		self.font_size_slider.grid(row=5, column=0, columnspan=1, pady=(10, 10))
+		self.font_size_display = customtkinter.CTkLabel(self.config_frame, text='_')
+		self.font_size_display.grid(row=5, column=1, columnspan=1)
 	
 	# Define functions for buttons
 	def generate_list_spotify(self):
@@ -57,13 +65,14 @@ class Generator(customtkinter.CTk):
 	
 	def generate_bingo_card(self):
 		info = generate_card_info(self.card_items.get(0.0, customtkinter.END).split('\n')[:-1], (3, 4), 4)
+		font_path = self.font_select_field.get()
 		options = {
 			'font': 'comic_sans',
 			'font_size': 18.0,
 			'cell_w': 50,
 			'cell_h': 40
 		}
-		pdf = generate_card(info, **options)
+		pdf = generate_card(info, font_path, self.font_size_slider.get(), 50, 40)
 		pdf.output('temp.pdf', 'F')
 		pdf_image = convert_from_path('temp.pdf')[0]
 		#pdf_image.save('test.png')
@@ -75,6 +84,16 @@ class Generator(customtkinter.CTk):
 		image = customtkinter.CTkImage(pdf_image, size=size)
 		self.display_image.configure(image=image)
 		self.display_image.image=image
+	
+	def set_font_size(self, value):
+		self.font_size = value
+		self.font_size_display.configure(text=value)
+		print(value)
+
+	def select_font(self):
+		filename = customtkinter.filedialog.askopenfilename()
+		self.font_select_field.delete(0, customtkinter.END)
+		self.font_select_field.insert(0, filename)
 
 def main():
 	app = Generator('test', '1200x800')
